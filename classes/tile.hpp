@@ -10,8 +10,10 @@ public:
 
 	virtual double getTimeToHit() const;
 	virtual int getRow() const;
+	virtual bool getTapped() const;
 	virtual void timePassed(double t);
 	virtual void setPreviousNull();
+	virtual void destroy();
 
 	virtual ~Tile();
 
@@ -21,6 +23,7 @@ private:
 	int x_row;
 	double x_timeToHit;
 	Tile *x_previousTile;
+	bool x_tapped;
 };
 
 #endif

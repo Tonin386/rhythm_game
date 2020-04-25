@@ -1,4 +1,5 @@
 #include "classes/tile.hpp"
+#include "classes/keyentity.hpp"
 
 #include <iostream>
 #include <map>
@@ -19,23 +20,56 @@ using namespace std;
 //debug functions
 void showKeysPressed(map<char, bool> keys);
 
+vector<KeyEntity> initKeysHistory()
+{
+	vector<KeyEntity> v;
+	KeyEntity d('D');
+	KeyEntity f('F');
+	KeyEntity j('J');
+	KeyEntity k('K');
+
+	v.push_back(d);
+	v.push_back(f);
+	v.push_back(j);
+	v.push_back(k);
+
+	return v;
+}
+
 Tile* createTile(Tile* previousTile = nullptr)
 {
 	return new Tile(MAX_ROWS, previousTile);
 }
 
-void updateTiles(vector<Tile*> tiles, double timeSinceLastTick)
+void updateTiles(vector<Tile*> &tiles)
 {
 	for(int i = 0; i < tiles.size(); i++)
 	{
-		tiles[i]->timePassed(timeSinceLastTick);
+		tiles[i]->timePassed(3);
+
 		if(tiles[i]->getTimeToHit() < -HEIGHT/MAX_TILES) 
 		{
 			if(i+1 < tiles.size()) tiles[i+1]->setPreviousNull();
+			if(!tiles[i]->getTapped()) cout << "Player lost!" << endl;
 			tiles.erase(tiles.begin()+i);
 			i--;
 		}
 
+
+	}
+}
+
+void checkingHits(vector<KeyEntity> k, vector<Tile*> t, double time)
+{
+	for(int i = 0; i < 4; i++)
+	{
+		for(int j = 0; j < t.size(); j++)
+		{
+			if(k[i].getPressTime() > t[j]->getTimeToHit() - HEIGHT/MAX_TILES + time && t[j]->getTimeToHit() + time > k[i].getReleaseTime() && i == t[j]->getRow())
+			{
+				t[j]->destroy();
+			}
+		}
 	}
 }
 
@@ -43,15 +77,19 @@ int main(int argc, char const *argv[])
 {
 	srand(time(NULL));
 
-	Clock tickingClock;
-	double lastTick = tickingClock.getElapsedTime().asMilliseconds();
-	double timeSinceLastTick = 0;
+	Clock processClock;
+	Clock tickClock;
+
+	long int tickCount = 0;
 
 	map<char, bool> keys;
 	keys['D'] = false;
 	keys['F'] = false;
 	keys['J'] = false;
 	keys['K'] = false;
+
+	vector<KeyEntity> keysHistory;
+	keysHistory = initKeysHistory();
 
 	vector<Tile*> tiles;
 	tiles.push_back(createTile());
@@ -60,15 +98,15 @@ int main(int argc, char const *argv[])
 
 	while (window.isOpen())
 	{
-		timeSinceLastTick = tickingClock.getElapsedTime().asMilliseconds() - lastTick;
-		lastTick = tickingClock.getElapsedTime().asMilliseconds();
-
-		if(timeSinceLastTick >= 1)
+		if(tickClock.getElapsedTime().asMilliseconds() >= 4)
 		{
-			updateTiles(tiles, timeSinceLastTick);
+			tickClock.restart();
+			tickCount++;
+			checkingHits(keysHistory, tiles, tickCount);
+			updateTiles(tiles);
 		}
 
-		while(tiles.size() < 1000)
+		while(tiles.size() < MAX_TILES+2)
 		{
 			tiles.push_back(createTile(tiles.back()));
 		}
@@ -83,21 +121,30 @@ int main(int argc, char const *argv[])
 					break;
 
 				case Event::KeyPressed:
-					if(event.key.code == Keyboard::D)
+					if(event.key.code == Keyboard::D && keys['D'] == false)
 					{
 						keys['D'] = true;
+						keysHistory[0].setPressTime(tickCount);
+						cout << "D Pressed at " << tickCount << endl; 
+
 					}
-					else if(event.key.code == Keyboard::F)
+					else if(event.key.code == Keyboard::F && keys['F'] == false)
 					{
 						keys['F'] = true;
+						keysHistory[1].setPressTime(tickCount);
+						cout << "F Pressed at " << tickCount << endl; 
 					}
-					else if(event.key.code == Keyboard::J)
+					else if(event.key.code == Keyboard::J && keys['J'] == false)
 					{
 						keys['J'] = true;
+						keysHistory[2].setPressTime(tickCount);
+						cout << "J Pressed at " << tickCount << endl; 
 					}
-					else if(event.key.code == Keyboard::K)
+					else if(event.key.code == Keyboard::K && keys['K'] == false)
 					{	
 						keys['K'] = true;
+						keysHistory[3].setPressTime(tickCount);
+						cout << "K Pressed at " << tickCount << endl; 
 					}
 					break;
 
@@ -105,18 +152,26 @@ int main(int argc, char const *argv[])
 					if(event.key.code == Keyboard::D)
 					{
 						keys['D'] = false;
+						keysHistory[0].setReleaseTime(tickCount);
+						cout << "D released at " << tickCount << endl;
 					}
 					else if(event.key.code == Keyboard::F)
 					{
 						keys['F'] = false;
+						keysHistory[1].setReleaseTime(tickCount);
+						cout << "F released at " << tickCount << endl;
 					}
 					else if(event.key.code == Keyboard::J)
 					{
 						keys['J'] = false;
+						keysHistory[2].setReleaseTime(tickCount);
+						cout << "J released at " << tickCount << endl;
 					}
 					else if(event.key.code == Keyboard::K)
 					{	
 						keys['K'] = false;
+						keysHistory[3].setReleaseTime(tickCount);
+						cout << "K released at " << tickCount << endl;
 					}
 					break;
 
