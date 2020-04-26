@@ -10,7 +10,7 @@ Tile::Tile(int maxRows, Tile* previousTile) : x_maxRows(maxRows), x_previousTile
 {
 	x_tapped = false;
 	x_row = rand() % x_maxRows;
-	if(previousTile == nullptr) x_timeToHit = 300;
+	if(previousTile == nullptr) x_timeToHit = 3000;
 	else 
 	{
 		x_timeToHit = x_previousTile->getTimeToHit() + 1000/5;
@@ -19,6 +19,8 @@ Tile::Tile(int maxRows, Tile* previousTile) : x_maxRows(maxRows), x_previousTile
 			x_row = rand() % x_maxRows;
 		}
 	}
+
+	x_color = Color(rand() % 150, rand() % 150, rand() % 150);
 }
 
 double Tile::getTimeToHit() const
@@ -34,6 +36,11 @@ int Tile::getRow() const
 bool Tile::getTapped() const
 {
 	return x_tapped;
+}
+
+Color Tile::getColor() const
+{
+	return x_color;
 }
 
 void Tile::setPreviousNull()
